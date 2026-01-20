@@ -68,12 +68,54 @@ function App() {
     }
   }
 
+  async function borrarTarea(id) {
+    if (!window.confirm('¿Seguro que quieres borrar?')) return
+    
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      dispatch(deleteTask(id))
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+
   function empezarEditar(tarea) {
     setEditandoId(tarea.id)
     setTitulo(tarea.title)
     setDescripcion(tarea.content || '')
   }
 
+  async function actualizarTarea(e) {
+    e.preventDefault()
+    if (!titulo.trim()) return
+
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({
+          title: titulo,
+          content: descripcion,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editandoId)
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      dispatch(updateTask(data))
+      setTitulo('')
+      setDescripcion('')
+      setEditandoId(null)
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4">
@@ -170,6 +212,12 @@ function App() {
                     </div>
                     
                     <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => empezarEditar(tarea)}
+                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                      >
+                        Editar
+                      </button>
                       <button
                         onClick={() => borrarTarea(tarea.id)}
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
