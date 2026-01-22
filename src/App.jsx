@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { supabase } from './lib/supabase'
-import { setTasks, addTask, updateTask, deleteTask } from './store/tasksSlice'
+import { setTasks, addTask, updateTask, deleteTask } from './store/tasks-slice'
 
 function App() {
   const dispatch = useDispatch()
