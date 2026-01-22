@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { supabase } from './lib/supabase'
-import { setTasks, addTask, updateTask, deleteTask } from './store/tasks-slice'
+import { setTasks, addTask, updateTask, deleteTask } from './store/tasksSlice'
 
 function App() {
   const dispatch = useDispatch()
@@ -234,6 +234,7 @@ function App() {
 
         {/* Footer */}
         <footer className="mt-8 text-center text-gray-500 text-sm">
+          <p>✨ Los cambios se ven en tiempo real entre dispositivos</p>
           <p className="mt-1">Hecho con React, Redux, Tailwind y Supabase</p>
         </footer>
       </div>
