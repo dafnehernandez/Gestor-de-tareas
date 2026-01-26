@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { supabase } from './lib/supabase'
+<<<<<<< HEAD
 import { setTasks, addTask, updateTask, deleteTask } from './store/tasksSlice'
+=======
+import { setTasks, addTask, updateTask, deleteTask } from './store/tasks-slice'
+>>>>>>> parent of e82e4cd (style: cambios en la parte visual del repositorio)
 
 function App() {
   const dispatch = useDispatch()
