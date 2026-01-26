@@ -291,7 +291,7 @@ function App() {
                         <input
                           type="text"
                           name="author"
-                          placeholder="Opcional"
+                          placeholder="Misa/Ro/Uri/Daf/Sandra/Antonio/Fancy/Dani"
                           className="
                             w-full
                             p-3
