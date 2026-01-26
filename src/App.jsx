@@ -201,7 +201,7 @@ function App() {
         {/* Header */}
         <header className="text-center py-8 mb-6">
           <h1 className="text-5xl font-bold text-amber-900 mb-2">
-            📌 Tablero de Notas Personalizado
+            📌 Tablero de Notas Desvelados ☕
           </h1>
           <p className="text-amber-700 text-xl">
             Agrega tu nombre, prioridad y elige el color de cada nota
@@ -583,7 +583,7 @@ function App() {
 
         {/* Footer */}
         <footer className="mt-8 text-center text-amber-600/70 text-sm">
-          <p className="mt-1">Filtra por prioridad y elige tu color favorito para cada nota</p>
+          <p className="mt-1">Hecho con amor para devsvelados ♥ by: Daffy </p>
         </footer>
       </div>
     </div>
