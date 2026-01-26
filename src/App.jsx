@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { supabase } from './lib/supabase'
 import { setTasks, addTask, updateTask, deleteTask } from './store/tasks-slice'
 import TaskItem from './components/TaskItem'
-import { Palette, User, AlertCircle, Clock, TrendingDown, X } from 'lucide-react'
+import { Palette, User, AlertCircle, Clock, TrendingDown, X, ChevronDown } from 'lucide-react'
 
 function App() {
   const dispatch = useDispatch()
@@ -18,6 +18,7 @@ function App() {
   const [editandoId, setEditandoId] = useState(null)
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [filtroPrioridad, setFiltroPrioridad] = useState('todas')
+  const [mostrarListaNombres, setMostrarListaNombres] = useState(false)
 
   // Opciones disponibles
   const priorities = [
@@ -26,7 +27,12 @@ function App() {
     { value: 'baja', label: 'Baja', icon: <TrendingDown size={16} />, color: 'bg-green-500' },
   ]
 
-  // PALETA DE COLORES ORIGINAL (la que te gustaba)
+  // Lista de nombres del equipo
+  const nombresEquipo = [
+    'Misa', 'Ro', 'Uri', 'Daf', 'Sandra', 'Antonio', 'Fancy', 'Dani'
+  ]
+
+  // PALETA DE COLORES ORIGINAL (la que te gustaba) - MÁS ANCHA
   const colors = [
     { value: 'yellow', label: 'Amarillo', bg: 'bg-yellow-100', border: 'border-yellow-300' },
     { value: 'blue', label: 'Azul', bg: 'bg-blue-100', border: 'border-blue-300' },
@@ -165,6 +171,7 @@ function App() {
       priority: 'media',
       note_color: 'yellow'
     })
+    setMostrarListaNombres(false)
   }
 
   function cancelarEdicion() {
@@ -181,9 +188,20 @@ function App() {
     }))
   }
 
+  function seleccionarNombre(nombre) {
+    setFormData(prev => ({
+      ...prev,
+      author: nombre
+    }))
+    setMostrarListaNombres(false)
+  }
+
   const tareasFiltradas = filtroPrioridad === 'todas' 
     ? tasks 
     : tasks.filter(tarea => tarea.priority === filtroPrioridad)
+
+  // Obtener todos los autores únicos para mostrar
+  const autoresUnicos = [...new Set(tasks.map(tarea => tarea.author).filter(Boolean))]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-3 sm:p-4">
@@ -211,13 +229,7 @@ function App() {
         <button
           onClick={() => {
             setEditandoId(null)
-            setFormData({
-              title: '',
-              content: '',
-              author: '',
-              priority: 'media',
-              note_color: 'yellow'
-            })
+            resetForm()
             setMostrarFormulario(true)
           }}
           className="
@@ -247,7 +259,7 @@ function App() {
           +
         </button>
 
-        {/* Modal del formulario con paleta original */}
+        {/* Modal del formulario con paleta original - MÁS ANCHO */}
         {mostrarFormulario && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-2 sm:p-4 z-30 backdrop-blur-sm">
             <div className="
@@ -256,7 +268,7 @@ function App() {
               border-amber-300
               rounded-xl
               shadow-2xl
-              max-w-lg
+              max-w-3xl  /* ANCHO AUMENTADO de max-w-lg a max-w-3xl */
               w-full
               max-h-[90vh]
               overflow-y-auto
@@ -282,33 +294,111 @@ function App() {
                   <div className="space-y-4">
                     {/* Nombre y Prioridad en misma fila */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Nombre */}
-                      <div>
+                      {/* Nombre con selector */}
+                      <div className="relative">
                         <label className="block text-amber-800 font-medium mb-1.5 text-sm flex items-center gap-1.5">
                           <User size={14} />
-                          Tu nombre
+                          Tu nombre (opcional)
                         </label>
-                        <input
-                          type="text"
-                          name="author"
-                          placeholder="Misa/Ro/Uri/Daf/Sandra/Antonio/Fancy/Dani"
-                          className="
-                            w-full
-                            p-3
-                            bg-white
-                            border
-                            border-amber-300
-                            rounded-lg
-                            focus:outline-none
-                            focus:border-amber-500
-                            focus:ring-2
-                            focus:ring-amber-200
-                            text-sm
-                            placeholder-amber-600/50
-                          "
-                          value={formData.author}
-                          onChange={handleInputChange}
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            name="author"
+                            placeholder="Selecciona o escribe tu nombre"
+                            className="
+                              w-full
+                              p-3
+                              pr-10
+                              bg-white
+                              border
+                              border-amber-300
+                              rounded-lg
+                              focus:outline-none
+                              focus:border-amber-500
+                              focus:ring-2
+                              focus:ring-amber-200
+                              text-sm
+                              placeholder-amber-600/50
+                              cursor-pointer
+                            "
+                            value={formData.author}
+                            onChange={handleInputChange}
+                            onClick={() => setMostrarListaNombres(!mostrarListaNombres)}
+                          />
+                          <ChevronDown 
+                            size={16} 
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-amber-500 cursor-pointer"
+                            onClick={() => setMostrarListaNombres(!mostrarListaNombres)}
+                          />
+                          
+                          {/* Lista desplegable de nombres */}
+                          {mostrarListaNombres && (
+                            <div className="absolute z-20 w-full mt-1 bg-white border border-amber-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                              {/* Nombres del equipo */}
+                              <div className="p-2 border-b border-amber-100">
+                                <div className="text-xs font-medium text-amber-600 mb-1">Equipo Desvelados</div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+                                  {nombresEquipo.map((nombre) => (
+                                    <button
+                                      key={nombre}
+                                      type="button"
+                                      onClick={() => seleccionarNombre(nombre)}
+                                      className="
+                                        text-xs
+                                        px-2
+                                        py-1.5
+                                        bg-amber-50
+                                        hover:bg-amber-100
+                                        rounded
+                                        transition-colors
+                                        text-amber-800
+                                        truncate
+                                      "
+                                    >
+                                      {nombre}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Autores existentes */}
+                              {autoresUnicos.length > 0 && (
+                                <div className="p-2">
+                                  <div className="text-xs font-medium text-amber-600 mb-1">Autores en notas</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {autoresUnicos.map((autor) => (
+                                      <button
+                                        key={autor}
+                                        type="button"
+                                        onClick={() => seleccionarNombre(autor)}
+                                        className="
+                                          text-xs
+                                          px-2
+                                          py-1.5
+                                          bg-blue-50
+                                          hover:bg-blue-100
+                                          rounded
+                                          transition-colors
+                                          text-blue-800
+                                          truncate
+                                        "
+                                      >
+                                        {autor}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Opción personalizada */}
+                              <div className="p-2 border-t border-amber-100">
+                                <div className="text-xs text-gray-500">
+                                  O escribe un nombre personalizado arriba
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Prioridad */}
@@ -353,7 +443,7 @@ function App() {
                       <input
                         type="text"
                         name="title"
-                        placeholder="¿De qué se trata?"
+                        placeholder="¿De qué se trata esta nota?"
                         className="
                           w-full
                           p-3
@@ -375,17 +465,17 @@ function App() {
                       />
                     </div>
 
-                    {/* Contenido */}
+                    {/* Contenido - MÁS ANCHO */}
                     <div>
                       <label className="block text-amber-800 font-medium mb-1.5 text-sm">
                         Contenido
                       </label>
                       <textarea
                         name="content"
-                        placeholder="Escribe los detalles..."
+                        placeholder="Escribe los detalles de tu nota aquí..."
                         className="
                           w-full
-                          h-32
+                          h-40  /* ALTURA AUMENTADA */
                           p-3
                           bg-white
                           border
@@ -473,40 +563,43 @@ function App() {
                       
                     </div>
 
-                    {/* Botones */}
-                    <div className="flex gap-3 pt-4">
+                    {/* Botones - MÁS SEPARADOS */}
+                    <div className="flex gap-4 pt-6">
                       <button
                         type="submit"
                         className="
                           flex-1
-                          py-3
+                          py-4  /* MÁS ALTO */
                           bg-gradient-to-r from-amber-500 to-orange-500
                           text-white
                           font-bold
-                          rounded-lg
+                          text-lg  /* TEXTO MÁS GRANDE */
+                          rounded-xl
                           hover:from-amber-600 hover:to-orange-600
                           transition-all
-                          shadow-lg
-                          hover:shadow-xl
+                          shadow-xl
+                          hover:shadow-2xl
+                          hover:scale-[1.02]
                           active:scale-95
                         "
                       >
-                        {editandoId ? '📌 Actualizar' : '📌 Crear Nota'}
+                        {editandoId ? '📌 Actualizar Nota' : '📌 Crear Nueva Nota'}
                       </button>
                       
                       <button
                         type="button"
                         onClick={cancelarEdicion}
                         className="
-                          px-6
-                          py-3
+                          px-8
+                          py-4
                           bg-gray-200
                           text-gray-700
                           font-medium
-                          rounded-lg
+                          rounded-xl
                           hover:bg-gray-300
                           transition-colors
-                          text-sm
+                          hover:shadow-lg
+                          text-base
                         "
                       >
                         Cancelar
@@ -633,6 +726,7 @@ function App() {
         {/* Footer */}
         <footer className="mt-6 text-center text-amber-600/70 text-sm">
           <p>Hecho con amor para Devsvelados ♥ by: Daffy</p>
+          <p className="mt-1 text-xs">Notas se actualizan en tiempo real</p>
         </footer>
       </div>
     </div>
