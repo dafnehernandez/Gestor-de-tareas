@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { supabase } from './lib/supabase'
 import { setTasks, addTask, updateTask, deleteTask } from './store/tasks-slice'
+import TaskItem from './components/TaskItem'
 
 function App() {
   const dispatch = useDispatch()
@@ -9,6 +10,7 @@ function App() {
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [editandoId, setEditandoId] = useState(null)
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
 
   // Cargar tareas al iniciar
   useEffect(() => {
@@ -63,13 +65,14 @@ function App() {
       dispatch(addTask(data))
       setTitulo('')
       setDescripcion('')
+      setMostrarFormulario(false)
     } catch (error) {
       console.error('Error:', error)
     }
   }
 
   async function borrarTarea(id) {
-    if (!window.confirm('¿Seguro que quieres borrar?')) return
+    if (!window.confirm('¿Seguro que quieres borrar esta nota?')) return
     
     try {
       const { error } = await supabase
@@ -88,6 +91,7 @@ function App() {
     setEditandoId(tarea.id)
     setTitulo(tarea.title)
     setDescripcion(tarea.content || '')
+    setMostrarFormulario(true)
   }
 
   async function actualizarTarea(e) {
@@ -112,124 +116,255 @@ function App() {
       setTitulo('')
       setDescripcion('')
       setEditandoId(null)
+      setMostrarFormulario(false)
     } catch (error) {
       console.error('Error:', error)
     }
   }
 
+  function cancelarEdicion() {
+    setEditandoId(null)
+    setTitulo('')
+    setDescripcion('')
+    setMostrarFormulario(false)
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-4">
+      {/* Fondo de corcho */}
+      <div className="
+        fixed
+        inset-0
+        bg-[url('https://www.transparenttextures.com/patterns/cork-board.png')]
+        opacity-10
+        -z-10
+      "></div>
+
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="text-center py-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">📝 Mis Tareas</h1>
-          <p className="text-gray-600">Gestor simple con React + Redux + Supabase</p>
+        <header className="text-center py-8 mb-12">
+          <h1 className="text-5xl font-bold text-amber-900 mb-4">
+            📌 Tablero de Notas
+          </h1>
+          <p className="text-amber-700 text-xl">
+            Tus ideas importantes, como notas en un tablero
+          </p>
         </header>
 
-        {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">
-            {editandoId ? '✏️ Editar Tarea' : '➕ Nueva Tarea'}
-          </h2>
-          
-          <form onSubmit={editandoId ? actualizarTarea : crearTarea}>
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="¿Qué necesitas hacer?"
-                className="w-full p-4 border-2 border-gray-200 rounded-xl text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="mb-6">
-              <textarea
-                placeholder="Detalles (opcional)"
-                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                rows="3"
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium text-lg"
-              >
-                {editandoId ? 'Actualizar' : 'Crear Tarea'}
-              </button>
-              
-              {editandoId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditandoId(null)
-                    setTitulo('')
-                    setDescripcion('')
-                  }}
-                  className="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 font-medium"
-                >
-                  Cancelar
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
+        {/* Botón para nueva nota (flotante) */}
+        <button
+          onClick={() => {
+            setEditandoId(null)
+            setTitulo('')
+            setDescripcion('')
+            setMostrarFormulario(true)
+          }}
+          className="
+            fixed
+            bottom-8
+            right-8
+            z-20
+            w-16
+            h-16
+            bg-amber-500
+            text-white
+            rounded-full
+            shadow-2xl
+            hover:bg-amber-600
+            hover:scale-110
+            transition-all
+            duration-300
+            flex
+            items-center
+            justify-center
+            text-3xl
+          "
+          title="Nueva nota"
+        >
+          +
+        </button>
 
-        {/* Lista de tareas */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">
-            📋 Tus Tareas ({tasks.length})
-          </h2>
-          
-          {tasks.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No hay tareas todavía</p>
-              <p className="text-gray-400 mt-2">¡Empieza creando tu primera tarea!</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {tasks.map(tarea => (
-                <div 
-                  key={tarea.id} 
-                  className="border-2 border-gray-100 rounded-xl p-5 hover:border-blue-200 hover:shadow-md transition-all"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-xl text-gray-800">{tarea.title}</h3>
-                      {tarea.content && (
-                        <p className="text-gray-600 mt-2">{tarea.content}</p>
-                      )}
-                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                        <span>📅 {new Date(tarea.created_at).toLocaleDateString()}</span>
-                        <span className={`px-3 py-1 rounded-full ${tarea.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {tarea.status === 'completed' ? 'Completada' : 'Pendiente'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => empezarEditar(tarea)}
-                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => borrarTarea(tarea.id)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                      >
-                        Borrar
-                      </button>
-                    </div>
-                  </div>
+        {/* Modal del formulario */}
+        {mostrarFormulario && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-30">
+            <div className="
+              bg-yellow-100
+              border-2
+              border-amber-300
+              rounded-lg
+              shadow-2xl
+              max-w-md
+              w-full
+              p-6
+              relative
+              transform
+              rotate-[-1deg]
+            ">
+              {/* Chincheta del formulario */}
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="w-8 h-8 bg-gray-400 rounded-full"></div>
+              </div>
+
+              <h2 className="text-2xl font-bold mb-6 text-amber-900">
+                {editandoId ? '✏️ Editar Nota' : '📝 Nueva Nota'}
+              </h2>
+              
+              <form onSubmit={editandoId ? actualizarTarea : crearTarea}>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Título de la nota..."
+                    className="
+                      w-full
+                      p-3
+                      bg-transparent
+                      border-b-2
+                      border-amber-300
+                      text-lg
+                      focus:outline-none
+                      focus:border-amber-500
+                      placeholder-amber-600/50
+                    "
+                    value={titulo}
+                    onChange={(e) => setTitulo(e.target.value)}
+                    required
+                    autoFocus
+                  />
                 </div>
-              ))}
+                
+                <div className="mb-6">
+                  <textarea
+                    placeholder="Escribe tu contenido aquí..."
+                    className="
+                      w-full
+                      h-48
+                      p-3
+                      bg-transparent
+                      border-2
+                      border-dashed
+                      border-amber-300
+                      rounded
+                      focus:outline-none
+                      focus:border-amber-500
+                      resize-none
+                      placeholder-amber-600/50
+                    "
+                    rows="4"
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    className="
+                      flex-1
+                      py-3
+                      bg-amber-500
+                      text-white
+                      font-semibold
+                      rounded-lg
+                      hover:bg-amber-600
+                      transition-colors
+                    "
+                  >
+                    {editandoId ? 'Actualizar' : 'Pegar Nota'}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={cancelarEdicion}
+                    className="
+                      px-6
+                      py-3
+                      bg-gray-200
+                      text-gray-700
+                      rounded-lg
+                      hover:bg-gray-300
+                      transition-colors
+                    "
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Tablero de notas */}
+        <div className="
+          relative
+          min-h-[500px]
+          p-8
+          rounded-3xl
+          bg-amber-100/50
+          border-8
+          border-amber-900/20
+          shadow-inner
+        ">
+          {/* Grid de notas */}
+          <div className="
+            grid
+            grid-cols-1
+            sm:grid-cols-2
+            md:grid-cols-3
+            lg:grid-cols-4
+            xl:grid-cols-5
+            gap-8
+            justify-items-center
+          ">
+            {tasks.map((tarea, index) => (
+              <div 
+                key={tarea.id}
+                className={`
+                  ${index % 3 === 0 ? 'transform rotate-[-3deg]' : ''}
+                  ${index % 4 === 0 ? 'transform rotate-[2deg]' : ''}
+                  ${index % 5 === 0 ? 'transform rotate-[-1deg]' : ''}
+                  hover:z-10
+                  transition-transform
+                  duration-300
+                `}
+              >
+                <TaskItem
+                  task={tarea}
+                  onEdit={empezarEditar}
+                  onDelete={borrarTarea}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Mensaje cuando no hay notas */}
+          {tasks.length === 0 && (
+            <div className="
+              text-center
+              py-20
+              text-amber-800/50
+              text-2xl
+              font-semibold
+            ">
+              <div className="inline-block p-8 bg-white/50 rounded-2xl shadow-lg rotate-3">
+                📝 ¡No hay notas aún! <br/>
+                <span className="text-lg">Crea tu primera nota</span>
+              </div>
             </div>
           )}
+        </div>
+
+        {/* Contador */}
+        <div className="
+          mt-8
+          text-center
+          text-amber-700
+          text-lg
+          font-semibold
+        ">
+          {tasks.length === 0 
+            ? 'Tablero vacío' 
+            : `Tienes ${tasks.length} nota${tasks.length !== 1 ? 's' : ''} en el tablero`
+          }
         </div>
 
         {/* Footer */}
