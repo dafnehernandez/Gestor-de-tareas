@@ -1,12 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit' 
-import tasksReducer from './tasks-slice' 
+import tasksReducer from './tasksSlice' 
+import { supabaseMiddleware } from './middleware/supabaseMiddleware'
 
 export const store = configureStore({ //libreta central-> store aqui se guardan datos globales
   reducer: {
     tasks: tasksReducer //reglas para manejar las tareas, definirá cómo agregar, eliminar o editar
     //tasks: aqui se guardan todas las tareas
-  }
-})
+  },
+   middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(supabaseMiddleware)
+});
 
 //Existe una store que es global de Redux
 //dentro de lo global existe una sección slice llamada tasks
