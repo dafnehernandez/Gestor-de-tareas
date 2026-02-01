@@ -36,31 +36,6 @@ function App() {
     }
   }, [loading, currentTaskId, editandoId]);
 
-  // async function cargarTareas() {
-  //   try {
-  //     const { data, error } = await supabase
-  //       .from('tasks')
-  //       .select('*')
-  //       .order('created_at', { ascending: false })
-      
-  //     if (error) throw error
-  //     dispatch(setTasks(data || []))
-  //   } catch (error) {
-  //     console.error('Error:', error)
-  //   }
-  // }
-
-  // function escucharCambios() {
-  //   supabase
-  //     .channel('tareas')
-  //     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, 
-  //       () => {
-  //         cargarTareas()
-  //       }
-  //     )
-  //     .subscribe()
-  // }
-
   async function handleSubmit(e) {
     e.preventDefault();
     if (!titulo.trim()) {
@@ -108,82 +83,6 @@ function App() {
       dispatch(deleteTaskAsync(id));
     }
   }
-
-  // async function crearTarea(e) {
-  //   e.preventDefault()
-  //   if (!titulo.trim()) return
-
-  //   try {
-  //     const nuevaTarea = {
-  //       title: titulo,
-  //       content: descripcion,
-  //       created_at: new Date().toISOString()
-  //     }
-
-  //     const { data, error } = await supabase
-  //       .from('tasks')
-  //       .insert([nuevaTarea])
-  //       .select()
-  //       .single()
-
-  //     if (error) throw error
-      
-  //     dispatch(addTask(data))
-  //     setTitulo('')
-  //     setDescripcion('')
-  //   } catch (error) {
-  //     console.error('Error:', error)
-  //   }
-  // }
-
-  // async function borrarTarea(id) {
-  //   if (!window.confirm('¿Seguro que quieres borrar?')) return
-    
-  //   try {
-  //     const { error } = await supabase
-  //       .from('tasks')
-  //       .delete()
-  //       .eq('id', id)
-
-  //     if (error) throw error
-  //     dispatch(deleteTask(id))
-  //   } catch (error) {
-  //     console.error('Error:', error)
-  //   }
-  // }
-
-  // function empezarEditar(tarea) {
-  //   setEditandoId(tarea.id)
-  //   setTitulo(tarea.title)
-  //   setDescripcion(tarea.content || '')
-  // }
-
-  // async function actualizarTarea(e) {
-  //   e.preventDefault()
-  //   if (!titulo.trim()) return
-
-  //   try {
-  //     const { data, error } = await supabase
-  //       .from('tasks')
-  //       .update({
-  //         title: titulo,
-  //         content: descripcion,
-  //         updated_at: new Date().toISOString()
-  //       })
-  //       .eq('id', editandoId)
-  //       .select()
-  //       .single()
-
-  //     if (error) throw error
-      
-  //     dispatch(updateTask(data))
-  //     setTitulo('')
-  //     setDescripcion('')
-  //     setEditandoId(null)
-  //   } catch (error) {
-  //     console.error('Error:', error)
-  //   }
-  // }
 
    return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4">
