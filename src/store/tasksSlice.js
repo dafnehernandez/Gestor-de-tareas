@@ -7,7 +7,7 @@ export const fetchTasks = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('tasksAdvanced')
         .select('*')
         .order('created_at', { ascending: false })
       
@@ -24,7 +24,7 @@ export const createTask = createAsyncThunk(
   async (taskData, { rejectWithValue }) => {
     try {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('tasksAdvanced')
         .insert([{
           /* CAMBIO: Agregar estado por defecto al crear */
           ...taskData,
@@ -47,7 +47,7 @@ export const updateTaskAsync = createAsyncThunk(
   async ({ id, updates }, { rejectWithValue }) => {
     try {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('tasksAdvanced')
         .update({
           ...updates,
           /* CAMBIO: Agregar updated_at automáticamente */
@@ -80,7 +80,7 @@ export const toggleTaskStatus = createAsyncThunk(
       const newStatus = task.status === 'completada' ? 'pendiente' : 'completada'
       
       const { data, error } = await supabase
-        .from('tasks')
+        .from('tasksAdvanced')
         .update({
           status: newStatus,
           updated_at: new Date().toISOString()
@@ -102,7 +102,7 @@ export const deleteTaskAsync = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const { error } = await supabase
-        .from('tasks')
+        .from('tasksAdvanced')
         .delete()
         .eq('id', id)
 
@@ -115,7 +115,7 @@ export const deleteTaskAsync = createAsyncThunk(
 )
 
 const tasksSlice = createSlice({
-  name: 'tasks',
+  name: 'tasksAdvanced',
   initialState: {
     list: [],
     loading: false,
