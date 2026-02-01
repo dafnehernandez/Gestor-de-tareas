@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchTasks, createTask, updateTaskAsync, deleteTaskAsync, setCurrentTaskId, clearError } from './store/tasksSlice'
+import { fetchTasks, createTask, updateTaskAsync, deleteTaskAsync, toggleTaskStatus, setCurrentTaskId, clearError, setFilter, selectFilteredTasks } from './store/tasksSlice'
 
 function App() {
   const dispatch = useDispatch();
-  const { list: tasks, loading, error, currentTaskId } = useSelector(state => state.tasks);
+  const { loading, error, currentTaskId, filter } = useSelector(state => state.tasks);
+  const tasks = useSelector(selectFilteredTasks); // Usamos el selector filtrado
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [localError, setLocalError] = useState('');
@@ -62,7 +63,6 @@ function App() {
         created_at: new Date().toISOString()
       }));
     }
-
     // No limpiar aquí, se maneja en el useEffect
   }
 
@@ -84,13 +84,28 @@ function App() {
     }
   }
 
-   return (
+  function handleToggleStatus(id) {
+    dispatch(toggleTaskStatus(id));
+  }
+
+  function handleFilterChange(newFilter) {
+    dispatch(setFilter(newFilter));
+  }
+
+  // Calcular estadísticas
+  const totalTareas = useSelector(state => state.tasks.list).length;
+  const tareasPendientes = useSelector(state => 
+    state.tasks.list.filter(t => t.status === 'pendiente').length);
+  const tareasCompletadas = useSelector(state => 
+    state.tasks.list.filter(t => t.status === 'completada').length);
+
+  return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="text-center py-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">📝 Mis Tareas</h1>
-          <p className="text-gray-600">Gestor simple con React + Redux + Supabase</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">📝 Gestor de Tareas</h1>
+          <p className="text-gray-600">Con estados y filtros - React + Redux + Supabase</p>
         </header>
 
         {/* Mensaje de error */}
@@ -106,6 +121,65 @@ function App() {
             <p>{editandoId ? 'Actualizando tarea...' : 'Cargando...'}</p>
           </div>
         )}
+
+        {/* Estadísticas */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">📊 Estadísticas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 p-4 rounded-xl text-center">
+              <p className="text-3xl font-bold text-blue-600">{totalTareas}</p>
+              <p className="text-gray-600">Total de tareas</p>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-xl text-center">
+              <p className="text-3xl font-bold text-yellow-600">{tareasPendientes}</p>
+              <p className="text-gray-600">Pendientes</p>
+            </div>
+            <div className="bg-green-50 p-4 rounded-xl text-center">
+              <p className="text-3xl font-bold text-green-600">{tareasCompletadas}</p>
+              <p className="text-gray-600">Completadas</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtros */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">🔍 Filtros</h2>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => handleFilterChange('todas')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                filter === 'todas' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              disabled={loading}
+            >
+              Todas ({totalTareas})
+            </button>
+            <button
+              onClick={() => handleFilterChange('pendientes')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                filter === 'pendientes' 
+                  ? 'bg-yellow-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              disabled={loading}
+            >
+              Pendientes ({tareasPendientes})
+            </button>
+            <button
+              onClick={() => handleFilterChange('completadas')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                filter === 'completadas' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              disabled={loading}
+            >
+              Completadas ({tareasCompletadas})
+            </button>
+          </div>
+        </div>
 
         {/* Formulario */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -169,9 +243,13 @@ function App() {
 
         {/* Lista de tareas */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">
-            📋 Tus Tareas ({tasks.length})
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              📋 {filter === 'todas' ? 'Todas las Tareas' : 
+                 filter === 'pendientes' ? 'Tareas Pendientes' : 
+                 'Tareas Completadas'} ({tasks.length})
+            </h2>
+          </div>
           
           {loading && tasks.length === 0 ? (
             <div className="text-center py-12">
@@ -179,8 +257,18 @@ function App() {
             </div>
           ) : tasks.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No hay tareas todavía</p>
-              <p className="text-gray-400 mt-2">¡Empieza creando tu primera tarea!</p>
+              <p className="text-gray-500 text-lg">
+                {filter === 'todas' 
+                  ? 'No hay tareas todavía' 
+                  : filter === 'pendientes'
+                  ? 'No hay tareas pendientes'
+                  : 'No hay tareas completadas'}
+              </p>
+              <p className="text-gray-400 mt-2">
+                {filter === 'todas' 
+                  ? '¡Empieza creando tu primera tarea!' 
+                  : '¡Crea una nueva tarea o cambia el filtro!'}
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -190,23 +278,58 @@ function App() {
                   className={`border-2 rounded-xl p-5 transition-all ${
                     tarea.id === editandoId
                       ? 'border-yellow-300 bg-yellow-50'
+                      : tarea.status === 'completada'
+                      ? 'border-green-200 bg-green-50'
                       : 'border-gray-100 hover:border-blue-200 hover:shadow-md'
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-bold text-xl text-gray-800">{tarea.title}</h3>
-                      {tarea.content && (
-                        <p className="text-gray-600 mt-2">{tarea.content}</p>
-                      )}
-                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                        <span>📅 {new Date(tarea.created_at).toLocaleDateString()}</span>
-                        {tarea.updated_at && (
-                          <span>✏️ {new Date(tarea.updated_at).toLocaleDateString()}</span>
-                        )}
-                        <span className={`px-3 py-1 rounded-full ${tarea.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {tarea.status === 'completed' ? 'Completada' : 'Pendiente'}
-                        </span>
+                      <div className="flex items-start gap-3">
+                        <button
+                          onClick={() => handleToggleStatus(tarea.id)}
+                          className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            tarea.status === 'completada'
+                              ? 'bg-green-500 border-green-500'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                          disabled={loading}
+                        >
+                          {tarea.status === 'completada' && (
+                            <span className="text-white text-sm">✓</span>
+                          )}
+                        </button>
+                        <div>
+                          <h3 className={`font-bold text-xl ${
+                            tarea.status === 'completada'
+                              ? 'text-gray-500 line-through'
+                              : 'text-gray-800'
+                          }`}>
+                            {tarea.title}
+                          </h3>
+                          {tarea.content && (
+                            <p className={`mt-2 ${
+                              tarea.status === 'completada'
+                                ? 'text-gray-400 line-through'
+                                : 'text-gray-600'
+                            }`}>
+                              {tarea.content}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                            <span>📅 {new Date(tarea.created_at).toLocaleDateString()}</span>
+                            {tarea.updated_at && tarea.updated_at !== tarea.created_at && (
+                              <span>✏️ {new Date(tarea.updated_at).toLocaleDateString()}</span>
+                            )}
+                            <span className={`px-3 py-1 rounded-full ${
+                              tarea.status === 'completada' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {tarea.status === 'completada' ? '✅ Completada' : '⏳ Pendiente'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     
@@ -236,6 +359,7 @@ function App() {
             </div>
           )}
         </div>
+
 
         {/* Footer */}
         <footer className="mt-8 text-center text-gray-500 text-sm">
