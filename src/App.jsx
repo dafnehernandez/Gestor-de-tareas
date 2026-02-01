@@ -12,30 +12,29 @@ function App() {
 
   // Cargar tareas al iniciar
   useEffect(() => {
-    dispatch(fetchTasks())
-  }, [dispatch])
+    dispatch(fetchTasks());
+  }, [dispatch]);
 
   // Sincronizar error de Redux con estado local
   useEffect(() => {
     if (error) {
+      setLocalError(error)
       const timer = setTimeout(() => {
-        dispatch(clearError())
+        setLocalError('')
+        dispatch(clearError());
       }, 5000)
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     }
-  }, [error, dispatch])
+  }, [error, dispatch]);
 
   // Limpiar formulario cuando se completa una operación
   useEffect(() => {
-    if (!loading && !error) {
-      // Si no hay error y no está cargando, limpiar formulario
-      if (currentTaskId && !loading) {
-        setTitulo('')
-        setDescripcion('')
-        dispatch(setCurrentTaskId(null))
-      }
+    // Si no está cargando y no hay currentTaskId, significa que se completó la edición
+    if (!loading && !currentTaskId && editandoId) {
+      setTitulo('');
+      setDescripcion('');
     }
-  }, [loading, error, currentTaskId, dispatch])
+  }, [loading, currentTaskId, editandoId]);
 
   // async function cargarTareas() {
   //   try {
@@ -63,45 +62,50 @@ function App() {
   // }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    if (!titulo.trim()) return
-
-    const taskData = {
-      title: titulo,
-      content: descripcion,
-      created_at: new Date().toISOString()
+    e.preventDefault();
+    if (!titulo.trim()) {
+      setLocalError('El título es requerido');
+      setTimeout(() => setLocalError(''), 3000);
+      return;
     }
 
     if (editandoId) {
+      // Para editar, solo enviar los campos que cambian
       dispatch(updateTaskAsync({
         id: editandoId,
         updates: {
-          ...taskData,
+          title: titulo,
+          content: descripcion,
           updated_at: new Date().toISOString()
         }
-      }))
+      }));
     } else {
-      dispatch(createTask(taskData))
+      // Para crear, enviar todos los campos
+      dispatch(createTask({
+        title: titulo,
+        content: descripcion,
+        created_at: new Date().toISOString()
+      }));
     }
 
     // No limpiar aquí, se maneja en el useEffect
   }
 
   function empezarEditar(tarea) {
-    dispatch(setCurrentTaskId(tarea.id))
-    setTitulo(tarea.title)
-    setDescripcion(tarea.content || '')
+    dispatch(setCurrentTaskId(tarea.id));
+    setTitulo(tarea.title);
+    setDescripcion(tarea.content || '');
   }
 
   function cancelarEdicion() {
-    dispatch(setCurrentTaskId(null))
-    setTitulo('')
-    setDescripcion('')
+    dispatch(setCurrentTaskId(null));
+    setTitulo('');
+    setDescripcion('');
   }
 
   function handleBorrar(id) {
     if (window.confirm('¿Seguro que quieres borrar?')) {
-      dispatch(deleteTaskAsync(id))
+      dispatch(deleteTaskAsync(id));
     }
   }
 
@@ -191,16 +195,16 @@ function App() {
         </header>
 
         {/* Mensaje de error */}
-        {error && (
+        {localError && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl">
-            <p className="font-medium">Error: {error}</p>
+            <p className="font-medium">Error: {localError}</p>
           </div>
         )}
 
         {/* Indicador de carga */}
         {loading && (
           <div className="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-xl text-center">
-            <p>Cargando...</p>
+            <p>{editandoId ? 'Actualizando tarea...' : 'Cargando...'}</p>
           </div>
         )}
 
@@ -240,11 +244,13 @@ function App() {
                 className={`px-6 py-3 rounded-xl font-medium text-lg ${
                   loading 
                     ? 'bg-gray-400 cursor-not-allowed' 
+                    : editandoId 
+                    ? 'bg-yellow-600 hover:bg-yellow-700'
                     : 'bg-blue-600 hover:bg-blue-700'
                 } text-white`}
                 disabled={loading}
               >
-                {editandoId ? 'Actualizar' : 'Crear Tarea'}
+                {editandoId ? 'Actualizar Tarea' : 'Crear Tarea'}
                 {loading && '...'}
               </button>
               
@@ -284,7 +290,7 @@ function App() {
                   key={tarea.id} 
                   className={`border-2 rounded-xl p-5 transition-all ${
                     tarea.id === editandoId
-                      ? 'border-blue-300 bg-blue-50'
+                      ? 'border-yellow-300 bg-yellow-50'
                       : 'border-gray-100 hover:border-blue-200 hover:shadow-md'
                   }`}
                 >
@@ -296,6 +302,9 @@ function App() {
                       )}
                       <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                         <span>📅 {new Date(tarea.created_at).toLocaleDateString()}</span>
+                        {tarea.updated_at && (
+                          <span>✏️ {new Date(tarea.updated_at).toLocaleDateString()}</span>
+                        )}
                         <span className={`px-3 py-1 rounded-full ${tarea.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                           {tarea.status === 'completed' ? 'Completada' : 'Pendiente'}
                         </span>
@@ -308,9 +317,9 @@ function App() {
                         className={`px-4 py-2 rounded-lg text-white ${
                           loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600'
                         }`}
-                        disabled={loading}
+                        disabled={loading || tarea.id === editandoId}
                       >
-                        Editar
+                        {tarea.id === editandoId ? 'Editando...' : 'Editar'}
                       </button>
                       <button
                         onClick={() => handleBorrar(tarea.id)}
